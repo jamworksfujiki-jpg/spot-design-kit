@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>サンプル勉強会 アンケート分析</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* レポート型: 黄色の帯の表紙 → 数字4枚 → 目次 → 章。章の中は 図 → 読み取り → 表 の順。フラット・角丸4px・グラデなし */
+:root{
+  --bg:#ffffff; --surface:#f5f7f8; --tint:#e5f9fc; --ink:#101820; --ink-2:#4a525c; --line:#d9dee3;
+  --cyan:#00C8E4; --cyan-ink:#007a8c; --yellow:#FFD400; --magenta:#E5006E; --magenta-ink:#C7005F; --grey-fill:#c9d1d7;
+  --ok:#1b7a43;
+  /* 白文字を載せる塗り（ダークでも明るくしない） */ --fill-mag:#E5006E; --fill-ok:#1b7a43; --warn:#9a5b00; --r:4px;
+  --f-jp:"Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;
+  --f-num:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1418; --surface:#162027; --tint:#11303a; --ink:#e9eef2; --ink-2:#a3b0ba; --line:#2a3741;
+  --cyan:#29d3ea; --cyan-ink:#5fdcef; --magenta:#ff5aa6; --magenta-ink:#ff7ab8; --grey-fill:#4a5862; --ok:#5fd08f; --warn:#f0b35a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1418; --surface:#162027; --tint:#11303a; --ink:#e9eef2; --ink-2:#a3b0ba; --line:#2a3741;
+  --cyan:#29d3ea; --cyan-ink:#5fdcef; --magenta:#ff5aa6; --magenta-ink:#ff7ab8; --grey-fill:#4a5862; --ok:#5fd08f; --warn:#f0b35a; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-jp);font-size:16px;line-height:1.8;-webkit-font-smoothing:antialiased}
+.page{max-width:960px;margin:0 auto;padding-inline:16px;padding-block:0 64px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+h1,h2,h3{text-wrap:balance;margin:0}
+p{margin:0}
+a{color:inherit}
+a:focus-visible,button:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+
+/* 表紙 */
+.cover{border-top:8px solid var(--yellow);padding-block:40px 32px;display:flex;flex-direction:column;gap:12px}
+.brandline{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink-2);letter-spacing:.04em}
+.brandline .dot{width:12px;height:12px;background:var(--cyan);border-radius:2px}
+.cover h1{font-size:clamp(28px,5.4vw,40px);font-weight:900;line-height:1.3}
+.cover .sub{font-size:17px;color:var(--ink-2)}
+.cover .meta{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 16px}
+
+/* 数字4枚 */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:4px;border-top:4px solid var(--cyan);min-width:0}
+.kpi.hot{border-top-color:var(--magenta)}
+.kpi .lbl{font-size:13px;color:var(--ink-2);font-weight:500}
+.kpi .v{font-family:var(--f-num);font-size:34px;font-weight:700;line-height:1.1}
+.kpi .v small{font-family:var(--f-jp);font-size:15px;font-weight:700;margin-left:2px}
+.kpi.hot .v{color:var(--magenta-ink)}
+.kpi .cap{font-size:12px;color:var(--ink-2);line-height:1.6}
+@media (max-width:720px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* 目次 */
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-top:24px}
+nav.toc ul{list-style:none;margin:0;padding:8px 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav.toc a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:var(--r);font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap;color:var(--ink-2)}
+nav.toc a:hover{background:var(--surface);color:var(--ink)}
+
+/* 章 */
+section{padding-top:56px;display:flex;flex-direction:column;gap:16px;scroll-margin-top:72px}
+.sec-head{display:flex;flex-direction:column;gap:4px;border-left:6px solid var(--cyan);padding-left:12px}
+.sec-head .k{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--cyan-ink)}
+.sec-head h2{font-size:24px;font-weight:900;line-height:1.4}
+h3{font-size:17px;font-weight:700;margin-top:8px}
+.note{font-size:13px;color:var(--ink-2);line-height:1.7}
+.mag{color:var(--magenta-ink);font-weight:700}
+
+/* 結論 */
+.findings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.finding{background:var(--surface);border-radius:var(--r);padding:16px 20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.finding .t{font-weight:700;font-size:16px;line-height:1.6}
+.finding p{font-size:15px;color:var(--ink-2)}
+.finding.key{background:#101820;color:#fff;border:1px solid var(--line)}
+.finding.key p{color:#fff;opacity:.85}
+.finding.key .t .mag{color:var(--yellow)}
+@media (max-width:720px){.findings{grid-template-columns:minmax(0,1fr)}}
+
+/* 図 */
+.panel{background:var(--surface);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--ink-2)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:8px;vertical-align:-1px}
+.stack-row{display:grid;grid-template-columns:56px minmax(0,1fr) 56px;gap:12px;align-items:center}
+.stack-row .who,.stack-row .pct{font-family:var(--f-num);font-size:14px;font-weight:700}
+.stack-row .pct{text-align:right}
+.stack{display:flex;height:24px;border-radius:2px;overflow:hidden;background:var(--line)}
+.stack span{display:block;height:100%}
+.c-top{background:var(--cyan-ink)} .c-ok{background:var(--cyan)} .c-meh{background:var(--grey-fill)} .c-bad{background:var(--magenta)}
+.hbars{display:flex;flex-direction:column;gap:12px}
+.hbar{display:grid;grid-template-columns:minmax(0,1fr) 56px;gap:4px 12px;align-items:end}
+.hbar .lbl{font-size:14px;min-width:0;line-height:1.5}
+.hbar .val{font-family:var(--f-num);font-size:15px;font-weight:700;text-align:right}
+.hbar .track{grid-column:1 / -1;height:12px;background:var(--line);border-radius:2px;overflow:hidden}
+.hbar .fill{height:100%;background:var(--cyan)}
+.hbar.hl .fill{background:var(--magenta)}
+.hbar.hl .lbl,.hbar.hl .val{font-weight:700}
+.hbar.hl .val{color:var(--magenta-ink)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:720px){.two{grid-template-columns:minmax(0,1fr)}}
+
+/* 読み取り */
+.insight{background:var(--tint);border-radius:var(--r);padding:16px 20px;display:flex;gap:12px;align-items:flex-start}
+.insight .tag{flex:none;font-size:12px;font-weight:700;background:var(--cyan);color:#101820;border-radius:2px;padding:0 8px;margin-top:4px}
+.insight p{font-size:15px}
+
+/* 表 */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--bg)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:12px 16px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+thead th{background:var(--surface);font-size:12px;color:var(--ink-2);font-weight:700;white-space:nowrap}
+td.r,th.r{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+tr.em td{background:var(--tint);font-weight:700}
+
+/* 一覧のフィルタ */
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.filters button{font:inherit;font-size:14px;font-weight:500;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.filters .c{font-family:var(--f-num);margin-left:8px;opacity:.8}
+.chip{display:inline-block;font-size:12px;font-weight:700;padding:0 8px;border-radius:999px;white-space:nowrap}
+.k-todo{background:var(--fill-mag);color:#fff}
+.k-done{background:var(--fill-ok);color:#fff}
+.k-mail{background:var(--yellow);color:#101820}
+
+/* 次の打ち手 */
+.actions{display:flex;flex-direction:column;gap:12px}
+.action{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:start;background:var(--surface);border-radius:var(--r);padding:16px 20px}
+.action .when{font-size:12px;font-weight:700;border-radius:2px;padding:4px 8px;white-space:nowrap;text-align:center;min-width:72px}
+.w-now{background:var(--fill-mag);color:#fff}
+.w-week{background:var(--yellow);color:#101820}
+.w-next{background:var(--cyan);color:#101820}
+.action .t{font-weight:700;font-size:16px;line-height:1.6}
+.action p{font-size:14px;color:var(--ink-2)}
+
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{nav.toc{display:none}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="cover">
+    <div class="brandline"><span class="dot" aria-hidden="true"></span>サンプル事業部 ／ 勉強会レポート</div>
+    <h1>サンプル勉強会<br>アンケート分析</h1>
+    <p class="sub">3回分（4/10・5/15・6/12）の参加者アンケート 180 件から、満足度・悩み・次の打ち手をまとめました。</p>
+    <p class="meta"><span>集計期間 2026/4/10〜6/12</span><span>回答 180 件（有効 176）</span><span>作成 2026/6/20</span></p>
+  </header>
+
+  <div class="kpis">
+    <div class="kpi"><span class="lbl">回答数（3回計）</span><span class="v">180<small>件</small></span><span class="cap">参加者の 82% が回答</span></div>
+    <div class="kpi"><span class="lbl">満足以上</span><span class="v">88<small>%</small></span><span class="cap">「非常に満足」「満足」の合計</span></div>
+    <div class="kpi"><span class="lbl">自社で試したい</span><span class="v">61<small>%</small></span><span class="cap">無料ツールの試用希望</span></div>
+    <div class="kpi hot"><span class="lbl">個別相談の希望</span><span class="v">24<small>社</small></span><span class="cap">うち未連絡 9 社</span></div>
+  </div>
+
+  <nav class="toc" aria-label="目次">
+    <ul>
+      <li><a href="#summary">結論</a></li>
+      <li><a href="#session">回別の比較</a></li>
+      <li><a href="#pain">参加者の悩み</a></li>
+      <li><a href="#follow">要対応リスト</a></li>
+      <li><a href="#next">次の打ち手</a></li>
+    </ul>
+  </nav>
+
+  <section id="summary">
+    <div class="sec-head"><span class="k">SUMMARY</span><h2>結論</h2></div>
+    <div class="findings">
+      <div class="finding"><p class="t">勉強会は好評。<span class="mag">満足以上 88%</span></p><p>3回とも 85% を超え、回を追うごとに「非常に満足」が増えています。</p></div>
+      <div class="finding"><p class="t">悩みの1位は「基準がない」</p><p>給与の決め方に根拠が無いと答えた会社が 53% で最多でした。</p></div>
+      <div class="finding"><p class="t">ただし相談にはつながっていない</p><p>試したい 61% に対し、個別相談の希望は 14% にとどまります。</p></div>
+      <div class="finding key"><p class="t">本命は <span class="mag">未連絡の 9 社</span>。今週中に連絡</p><p>個別相談を希望したのに、まだ誰も連絡していない会社が 9 社あります。</p></div>
+    </div>
+  </section>
+
+  <section id="session">
+    <div class="sec-head"><span class="k">BY SESSION</span><h2>回別の比較</h2></div>
+    <div class="panel">
+      <h3>満足度</h3>
+      <div class="legend"><span><i class="c-top"></i>非常に満足</span><span><i class="c-ok"></i>満足</span><span><i class="c-meh"></i>あまり満足しなかった</span><span><i class="c-bad"></i>満足しなかった</span></div>
+      <div class="stack-row"><span class="who">4/10</span><div class="stack" role="img" aria-label="4/10 非常に満足38% 満足48% あまり10% 不満4%"><span class="c-top" style="width:38%"></span><span class="c-ok" style="width:48%"></span><span class="c-meh" style="width:10%"></span><span class="c-bad" style="width:4%"></span></div><span class="pct">86%</span></div>
+      <div class="stack-row"><span class="who">5/15</span><div class="stack" role="img" aria-label="5/15 非常に満足44% 満足43% あまり10% 不満3%"><span class="c-top" style="width:44%"></span><span class="c-ok" style="width:43%"></span><span class="c-meh" style="width:10%"></span><span class="c-bad" style="width:3%"></span></div><span class="pct">87%</span></div>
+      <div class="stack-row"><span class="who">6/12</span><div class="stack" role="img" aria-label="6/12 非常に満足52% 満足39% あまり7% 不満2%"><span class="c-top" style="width:52%"></span><span class="c-ok" style="width:39%"></span><span class="c-meh" style="width:7%"></span><span class="c-bad" style="width:2%"></span></div><span class="pct">91%</span></div>
+      <p class="note">右の数字は「非常に満足」＋「満足」。無回答は除いています。</p>
+    </div>
+    <div class="insight"><span class="tag">読み取り</span><p>回を重ねるごとに「非常に満足」が 14 ポイント増えました。資料を減らして実演を増やした 5/15 以降で伸びています。</p></div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>項目</th><th class="r">4/10</th><th class="r">5/15</th><th class="r">6/12</th><th class="r">合計</th></tr></thead>
+        <tbody>
+          <tr><td>回答数</td><td class="r">58</td><td class="r">62</td><td class="r">60</td><td class="r">180</td></tr>
+          <tr><td>満足以上</td><td class="r">86%</td><td class="r">87%</td><td class="r">91%</td><td class="r">88%</td></tr>
+          <tr class="em"><td>個別相談の希望</td><td class="r">7</td><td class="r">8</td><td class="r">9</td><td class="r">24</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="pain">
+    <div class="sec-head"><span class="k">PAIN POINTS</span><h2>参加者の悩み</h2></div>
+    <div class="two">
+      <div class="panel">
+        <h3>給与の決め方（複数選択）</h3>
+        <div class="hbars">
+          <div class="hbar hl"><span class="lbl">根拠や基準がなく、経営者の判断で決めている</span><span class="val">53%</span><div class="track"><div class="fill" style="width:53%"></div></div></div>
+          <div class="hbar"><span class="lbl">同業他社の相場を参考にしている</span><span class="val">31%</span><div class="track"><div class="fill" style="width:31%"></div></div></div>
+          <div class="hbar"><span class="lbl">等級表に沿って決めている</span><span class="val">18%</span><div class="track"><div class="fill" style="width:18%"></div></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>評価制度の状況</h3>
+        <div class="hbars">
+          <div class="hbar hl"><span class="lbl">評価制度がない</span><span class="val">44%</span><div class="track"><div class="fill" style="width:44%"></div></div></div>
+          <div class="hbar"><span class="lbl">あるが給与に連動していない</span><span class="val">29%</span><div class="track"><div class="fill" style="width:29%"></div></div></div>
+          <div class="hbar"><span class="lbl">運用できている</span><span class="val">27%</span><div class="track"><div class="fill" style="width:27%"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="insight"><span class="tag">読み取り</span><p>「基準がない」と「評価制度がない」は同じ会社に重なっています（両方に当てはまる会社が 38%）。</p></div>
+  </section>
+
+  <section id="follow">
+    <div class="sec-head"><span class="k">FOLLOW-UP</span><h2>要対応リスト（<span class="num">6</span> 社）</h2></div>
+    <div class="filters" role="group" aria-label="状況で絞り込み">
+      <button type="button" aria-pressed="true" data-f="all">すべて<span class="c">6</span></button>
+      <button type="button" aria-pressed="false" data-f="todo">未連絡<span class="c">3</span></button>
+      <button type="button" aria-pressed="false" data-f="mail">メール済<span class="c">2</span></button>
+      <button type="button" aria-pressed="false" data-f="done">アポ済<span class="c">1</span></button>
+    </div>
+    <div class="tbl">
+      <table id="follow-table">
+        <thead><tr><th>状況</th><th>会社</th><th class="r">回</th><th class="r">従業員</th><th>関心</th></tr></thead>
+        <tbody>
+          <tr data-k="todo"><td><span class="chip k-todo">未連絡</span></td><td>サンプル商事株式会社</td><td class="r">6/12</td><td class="r">12</td><td>評価制度</td></tr>
+          <tr data-k="todo"><td><span class="chip k-todo">未連絡</span></td><td>見本工業株式会社</td><td class="r">6/12</td><td class="r">34</td><td>給与テーブル</td></tr>
+          <tr data-k="todo"><td><span class="chip k-todo">未連絡</span></td><td>テスト物産合同会社</td><td class="r">5/15</td><td class="r">8</td><td>手続き代行</td></tr>
+          <tr data-k="mail"><td><span class="chip k-mail">メール済</span></td><td>架空建設株式会社</td><td class="r">5/15</td><td class="r">51</td><td>給与テーブル</td></tr>
+          <tr data-k="mail"><td><span class="chip k-mail">メール済</span></td><td>例示フーズ株式会社</td><td class="r">4/10</td><td class="r">22</td><td>評価制度</td></tr>
+          <tr data-k="done"><td><span class="chip k-done">アポ済</span></td><td>デモ設計事務所</td><td class="r">4/10</td><td class="r">6</td><td>顧問契約</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="next">
+    <div class="sec-head"><span class="k">NEXT ACTIONS</span><h2>次の打ち手</h2></div>
+    <div class="actions">
+      <div class="action"><span class="when w-now">今すぐ</span><div><p class="t">未連絡の 3 社に電話する</p><p>個別相談を希望してから 1 週間以上たっています。担当は営業 A。</p></div></div>
+      <div class="action"><span class="when w-week">今週</span><div><p class="t">「基準がない」53% 向けに、等級表の見本を1枚つくる</p><p>次回の配布資料とメール本文の両方に使います。</p></div></div>
+      <div class="action"><span class="when w-next">来月</span><div><p class="t">7 月回は実演を 20 分に増やす</p><p>満足度が伸びた 5/15 以降の構成をそのまま続けます。</p></div></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>出典: 勉強会アンケート（Googleフォーム、2026/6/18 取得）。満足度は無回答を除いた割合。</p>
+    <p>このページの会社名・数字はすべて見本です。</p>
+  </footer>
+</div>
+<script>
+// 一覧のフィルタ: aria-pressed で状態を持つ
+document.querySelectorAll('.filters button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.filters button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    var f = b.dataset.f;
+    document.querySelectorAll('#follow-table tbody tr').forEach(function (tr) { tr.hidden = f !== 'all' && tr.dataset.k !== f; });
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>サンプル社労士サービス</title>
+<meta name="description" content="LP型テンプレート（見本）">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* LP型: ヘッダー → 3色の面のヒーロー(サービス名・料金・ボタン) → 実績 → サービスカード(色面ヘッダー) → 流れ → FAQ → CTA。フラット・角丸4px・グラデなし */
+:root{
+  --bg:#F3F6F7; --surface:#FFFFFF; --ink:#101820; --ink-2:#4A525C; --line:#D9DEE3;
+  --cyan:#00C8E4; --yellow:#FFD400; --magenta:#E5006E; --magenta-ink:#C7005F; --cyan-ink:#007A8F;
+  --signup:#D4372A; --login:#2864F0; --r:4px;
+  --font:"Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D1317; --surface:#162027; --ink:#E7EDF1; --ink-2:#9AA8B3; --line:#2A3742; --magenta-ink:#FF5AA5; --cyan-ink:#4FD8EC; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1317; --surface:#162027; --ink:#E7EDF1; --ink-2:#9AA8B3; --line:#2A3742; --magenta-ink:#FF5AA5; --cyan-ink:#4FD8EC; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.8}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.4}
+p{margin:0}
+:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.in{max-width:1120px;margin:0 auto;padding-inline:16px}
+
+/* ヘッダー */
+.hd{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.hd .in{display:flex;align-items:center;gap:16px;min-height:64px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:900;font-size:18px;text-decoration:none;color:var(--ink)}
+.logo i{width:28px;height:28px;background:var(--cyan);border-radius:var(--r);position:relative}
+.logo i::after{content:"";position:absolute;top:8px;right:6px;width:8px;height:8px;background:var(--yellow);border-radius:50%}
+.nav{display:flex;gap:4px;margin-left:auto}
+.nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;font-size:14px;color:var(--ink);text-decoration:none;border-radius:var(--r)}
+.nav a:hover{background:var(--bg)}
+.hbtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border-radius:var(--r);font-weight:700;font-size:14px;color:#fff;text-decoration:none}
+.hbtn.su{background:var(--signup)}.hbtn.li{background:var(--login)}
+@media (max-width:900px){.nav{display:none}.hd .in{justify-content:space-between}.hd .btns{margin-left:auto}}
+.btns{display:flex;gap:8px}
+
+/* ヒーロー: 3色の面 */
+.hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.hero > div{padding:40px 24px 32px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.hero .c{background:var(--cyan);color:#101820}
+.hero .y{background:var(--yellow);color:#101820}
+.hero .m{background:var(--magenta);color:#fff}
+.pill{align-self:flex-start;background:#fff;color:#101820;font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px}
+.hero h2{font-size:clamp(26px,3.4vw,40px);font-weight:900}
+.price{font-size:clamp(36px,5vw,56px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.price small{font-size:18px;font-weight:700;margin-left:2px}
+.hero .say{font-size:13px;font-weight:700}
+.click{margin-top:auto;align-self:flex-start;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 20px;background:#fff;color:#101820;font-weight:900;font-size:14px;letter-spacing:.08em;text-decoration:none;border-radius:var(--r)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+
+/* 実績 */
+.stats{display:flex;justify-content:center;flex-wrap:wrap;gap:16px 48px;padding:32px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.stat{text-align:center}
+.stat .v{font-size:36px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat .v small{font-size:16px;margin-left:2px}
+.stat .lb{font-size:13px;font-weight:700}
+.stat .as{font-size:12px;color:var(--ink-2)}
+
+/* セクション */
+.sec{padding-block:64px 0}
+.sec-title{text-align:center;font-size:clamp(24px,3vw,32px);font-weight:900}
+.sec-lead{text-align:center;color:var(--ink-2);margin-top:8px}
+
+/* サービスカード */
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:32px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.card .ch{padding:24px 20px;text-align:center}
+.card .ch h3{font-size:24px;font-weight:900}
+.card .ch p{font-size:13px;font-weight:700}
+.card.c .ch{background:var(--cyan);color:#101820}
+.card.y .ch{background:var(--yellow);color:#101820}
+.card.m .ch{background:var(--magenta);color:#fff}
+.card .cb{padding:20px;display:flex;flex-direction:column;gap:12px;flex:1}
+.card .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.card .row span{font-size:14px;font-weight:700}
+.card .row b{color:var(--magenta-ink);font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+.card ul{margin:0;padding-left:20px;font-size:14px;color:var(--ink-2)}
+.cbtn{margin-top:auto;display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:var(--r);border:2px solid var(--ink);color:var(--ink);font-weight:700;text-decoration:none}
+.cbtn:hover{background:var(--ink);color:var(--surface)}
+@media (max-width:900px){.cards{grid-template-columns:minmax(0,1fr)}}
+
+/* 流れ */
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:32px;list-style:none;padding:0}
+.steps li{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--cyan);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.steps .no{align-self:flex-start;background:#101820;color:#fff;font-size:12px;font-weight:700;padding:0 8px;border-radius:2px;letter-spacing:.06em}
+.steps h3{font-size:17px;font-weight:700}
+.steps p{font-size:14px;color:var(--ink-2)}
+@media (max-width:760px){.steps{grid-template-columns:minmax(0,1fr)}}
+
+/* FAQ */
+.faq{max-width:800px;margin:32px auto 0;display:flex;flex-direction:column;gap:8px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.faq summary{cursor:pointer;min-height:56px;display:flex;align-items:center;gap:12px;padding:8px 20px;font-weight:700;list-style:none}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::before{content:"Q";color:var(--cyan-ink);font-weight:900}
+.faq .a{padding:0 20px 16px 44px;color:var(--ink-2);font-size:15px}
+
+/* CTA */
+.cta{margin-top:64px;background:var(--cyan);color:#101820;text-align:center;padding:48px 16px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.cta h2{font-size:clamp(22px,3vw,30px);font-weight:900}
+.cta a{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 40px;background:#101820;color:#fff;font-weight:900;border-radius:var(--r);text-decoration:none}
+footer{padding:24px 16px;text-align:center;font-size:12px;color:var(--ink-2)}
+</style>
+</head>
+<body>
+<header class="hd"><div class="in">
+  <a class="logo" href="#"><i aria-hidden="true"></i>サンプル社労士</a>
+  <nav class="nav" aria-label="メイン"><a href="#service">サービスと料金</a><a href="#flow">ご利用の流れ</a><a href="#faq">よくある質問</a></nav>
+  <div class="btns"><a class="hbtn su" href="#cta">はじめてのお客様</a><a class="hbtn li" href="#cta">ログイン</a></div>
+</div></header>
+
+<main>
+  <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">内容と価格に納得の社労士サービス</h1>
+  <div class="hero">
+    <div class="c"><span class="pill">顧問料0円</span><h2>手続き代行</h2><p class="price">0,000<small>円〜</small></p><p class="say">入退社の手続きを1件から</p><a class="click" href="#service">詳しく見る →</a></div>
+    <div class="y"><span class="pill">まかせて安心</span><h2>給与計算</h2><p class="price">00,000<small>円/月〜</small></p><p class="say">毎月の計算と明細の発行まで</p><a class="click" href="#service">詳しく見る →</a></div>
+    <div class="m"><span class="pill">月額定額</span><h2>顧問契約</h2><p class="price">00,000<small>円/月〜</small></p><p class="say">手続き・相談までまるごと</p><a class="click" href="#service">詳しく見る →</a></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="lb">ご利用企業</div><div class="v">0,000<small>社</small></div><div class="as">20XX年X月現在</div></div>
+    <div class="stat"><div class="lb">提携事務所</div><div class="v">000<small>事務所</small></div><div class="as">20XX年X月現在</div></div>
+  </div>
+
+  <section class="sec in" id="service">
+    <h2 class="sec-title">サービスと料金</h2>
+    <p class="sec-lead">あてはまるものを選ぶだけ。そのままオンラインでご注文いただけます。</p>
+    <div class="cards">
+      <article class="card c"><div class="ch"><h3>手続き代行</h3><p>必要なときに1件から</p></div><div class="cb"><div class="row"><span>1件あたり</span><b>0,000円〜</b></div><ul><li>社会保険・雇用保険の入退社</li><li>オンラインで注文・進捗確認</li></ul><a class="cbtn" href="#cta">手続きを選ぶ</a></div></article>
+      <article class="card y"><div class="ch"><h3>給与計算</h3><p>設定から毎月の運用まで</p></div><div class="cb"><div class="row"><span>月額</span><b>00,000円〜</b></div><ul><li>勤怠の取り込みと計算</li><li>明細の発行・振込データ作成</li><li>年末調整の準備</li></ul><a class="cbtn" href="#cta">相談する</a></div></article>
+      <article class="card m"><div class="ch"><h3>顧問契約</h3><p>手続き・相談</p></div><div class="cb"><div class="row"><span>月額定額</span><b>00,000円〜</b></div><ul><li>手続きは件数を気にせず</li><li>労務相談はチャットで</li></ul><a class="cbtn" href="#cta">相談する</a></div></article>
+    </div>
+  </section>
+
+  <section class="sec in" id="flow">
+    <h2 class="sec-title">ご利用の流れ</h2>
+    <ol class="steps">
+      <li><span class="no">STEP 1</span><h3>無料で登録</h3><p>会社名とメールアドレスだけで始められます。</p></li>
+      <li><span class="no">STEP 2</span><h3>手続きを選んで注文</h3><p>画面の質問に答えると、必要な書類が分かります。</p></li>
+      <li><span class="no">STEP 3</span><h3>完了をお知らせ</h3><p>届出が終わったら控えをお送りします。</p></li>
+    </ol>
+  </section>
+
+  <section class="sec in" id="faq">
+    <h2 class="sec-title">よくある質問</h2>
+    <div class="faq">
+      <details><summary>顧問契約をしなくても使えますか？</summary><p class="a">はい。手続き代行は1件からご注文いただけます。</p></details>
+      <details><summary>料金はいつ支払いますか？</summary><p class="a">ご注文時にクレジットカードまたは請求書払いをお選びいただけます。</p></details>
+    </div>
+  </section>
+
+  <section class="cta" id="cta">
+    <h2>まずは無料で登録してください</h2>
+    <a href="#" onclick="alert('見本のため遷移しません');return false;">無料で登録する</a>
+  </section>
+</main>
+<footer>このページの料金・実績はすべて見本です。数字は出典付きのものだけに差し替えてください。</footer>
+</body>
+</html>

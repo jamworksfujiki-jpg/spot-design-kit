@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>対応状況モニター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ダッシュボード型: ヘッダー(最終更新=最も古いデータ源) → KPI(押すと一覧へ) → 要対応の一覧 → 担当別の表(押すとドロワー)。明るいスレート＋白パネル */
+:root{
+  --bg:#eef2f8; --panel:#ffffff; --panel2:#f4f6fb; --line:#dde3ee; --ink:#16213a; --ink-2:#4a5672; --faint:#5d6883;
+  --red:#d6293e; --amber:#9a5b00; --teal:#0b7a6d; --blue:#2f6fdb; --violet:#7048c8;
+  --r:12px; --r-lg:16px; --shadow:0 1px 2px rgba(22,33,58,.05);
+  --font:"Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1522; --panel:#182033; --panel2:#1e2840; --line:#2c3852; --ink:#e6ebf5; --ink-2:#a6b1c8; --faint:#8b97b0;
+  --red:#ff6b7d; --amber:#f2b44c; --teal:#4fd1c0; --blue:#7aa7ff; --violet:#b39bff; --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1522; --panel:#182033; --panel2:#1e2840; --line:#2c3852; --ink:#e6ebf5; --ink-2:#a6b1c8; --faint:#8b97b0;
+  --red:#ff6b7d; --amber:#f2b44c; --teal:#4fd1c0; --blue:#7aa7ff; --violet:#b39bff; --shadow:none; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.7}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 16px 64px;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{margin:0;text-wrap:balance}
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ヘッダー */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 16px}
+.top h1{font-size:24px;font-weight:900}
+.top .sub{font-size:12px;color:var(--ink-2)}
+.fresh{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
+.fresh .dot{width:8px;height:8px;border-radius:50%;background:var(--teal)}
+.fresh.stale .dot{background:var(--red)}
+.fresh.stale b{color:var(--red)}
+.ghost{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-weight:700;font-size:13px}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{position:relative;overflow:hidden;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;cursor:pointer;box-shadow:var(--shadow);transition:transform .2s cubic-bezier(.2,0,0,1)}
+.kpi:hover{transform:translateY(-2px)}
+.kpi::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--tone)}
+.kpi .lb{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--ink-2)}
+.kpi .v{font-size:30px;font-weight:900;line-height:1.1;margin-top:8px;font-variant-numeric:tabular-nums}
+.kpi .v small{font-size:14px;font-weight:700;color:var(--ink-2);margin-left:4px}
+.kpi .go{display:block;font-size:12px;font-weight:700;color:var(--tone);margin-top:8px}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* パネル */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 20px;box-shadow:var(--shadow);scroll-margin-top:16px;min-width:0}
+.panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
+.panel-head h2{font-size:16px;font-weight:700}
+.panel-head p{font-size:12px;color:var(--ink-2)}
+.cols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px}
+@media (max-width:960px){.cols{grid-template-columns:minmax(0,1fr)}}
+
+/* レベルバッジ（文字＋色＋枠） */
+.lv{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;padding:0 8px;border-radius:999px;white-space:nowrap;border:1px solid}
+.lv-1{color:#fff;background:#d6293e;border-color:#d6293e}
+.lv-2{color:#b4182c;background:#fdecee;border-color:#f3b4bc}
+.lv-3{color:#8f5200;background:#fff4e0;border-color:#f2cf8f}
+.lv-4{color:#2556b0;background:#eaf1ff;border-color:#b9cff5}
+
+/* 要対応の行 */
+.item{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:none}
+.item .bar{width:4px;border-radius:999px;flex:none;background:var(--tone)}
+.item .meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px;color:var(--faint)}
+.item .who{font-weight:700;font-size:14px;color:var(--ink)}
+.item .txt{font-size:13px;color:var(--ink-2);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* 担当別の表 */
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:12px;color:var(--ink-2);font-weight:700}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--panel2)}
+tbody tr:last-child td{border-bottom:none}
+.rowbtn{background:none;border:0;padding:0;min-height:44px;font-weight:700;cursor:pointer;text-align:left}
+
+/* ドロワー */
+.drawer{position:fixed;inset:0;z-index:50;display:none;justify-content:flex-end}
+.drawer.on{display:flex}
+.drawer .scrim{position:absolute;inset:0;background:rgba(22,33,58,.35)}
+.drawer aside{position:relative;width:100%;max-width:560px;height:100%;overflow-y:auto;background:var(--bg);border-left:1px solid var(--line);padding:24px}
+.drawer .close{position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:20px}
+.facts{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.facts ul{margin:8px 0 0;padding-left:20px}
+footer{font-size:12px;color:var(--faint)}
+@media (prefers-reduced-motion:reduce){.kpi{transition:none}.kpi:hover{transform:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>対応状況モニター</h1>
+      <p class="sub">社内限・見本データ。問い合わせ・メール・チャットの未対応を担当者別に集計します。</p>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <span class="fresh" id="fresh"><span class="dot" aria-hidden="true"></span><span>最終更新 <b id="fresh-t">—</b>（最も古いデータ源: メール）</span></span>
+      <button class="ghost" type="button" id="reload">再読み込み</button>
+    </div>
+  </header>
+
+  <div class="kpis">
+    <button class="kpi" type="button" style="--tone:var(--red)" data-jump="critical"><span class="lb">最優先</span><div class="v">3<small>件</small></div><span class="go">一覧を見る →</span></button>
+    <button class="kpi" type="button" style="--tone:var(--amber)" data-jump="critical"><span class="lb">48時間以上 未返信</span><div class="v">7<small>件</small></div><span class="go">一覧を見る →</span></button>
+    <button class="kpi" type="button" style="--tone:var(--blue)" data-jump="staff"><span class="lb">今週の受付</span><div class="v">128<small>件</small></div><span class="go">担当別を見る →</span></button>
+    <button class="kpi" type="button" style="--tone:var(--teal)" data-jump="staff"><span class="lb">今週の完了率</span><div class="v">86<small>%</small></div><span class="go">担当別を見る →</span></button>
+  </div>
+
+  <div class="cols">
+    <section class="panel" id="critical">
+      <div class="panel-head"><div><h2>要対応</h2><p>レベル順。押すと元のメッセージを開きます（見本では無効）</p></div></div>
+      <div class="item" style="--tone:var(--red)"><span class="bar"></span><div style="min-width:0"><div class="meta"><span class="lv lv-1">最優先</span><span class="who">サンプル商事</span><span class="num">10/8 09:12・メール・担当 A</span></div><p class="txt">先月の給与明細の金額が違うと社員から問い合わせがありました。至急確認をお願いします。</p></div></div>
+      <div class="item" style="--tone:var(--red)"><span class="bar"></span><div style="min-width:0"><div class="meta"><span class="lv lv-1">最優先</span><span class="who">見本工業</span><span class="num">10/7 17:40・チャット・担当 B</span></div><p class="txt">提出期限が明日ですが、まだ書類の返送がありません。</p></div></div>
+      <div class="item" style="--tone:var(--amber)"><span class="bar"></span><div style="min-width:0"><div class="meta"><span class="lv lv-2">高</span><span class="who">テスト物産</span><span class="num">10/6 11:03・ポータル・担当 A</span></div><p class="txt">2 回目の催促です。先週お願いした件はどうなっていますか。</p></div></div>
+      <div class="item" style="--tone:var(--blue)"><span class="bar"></span><div style="min-width:0"><div class="meta"><span class="lv lv-4">確認</span><span class="who">架空建設</span><span class="num">10/6 09:20・メール・担当 C</span></div><p class="txt">新しく入社した方の手続きについて、必要な書類を教えてください。</p></div></div>
+    </section>
+
+    <section class="panel" id="staff">
+      <div class="panel-head"><div><h2>担当別</h2><p>直近 4 週。行を押すと詳細</p></div></div>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>担当</th><th>レベル</th><th class="r">未対応</th><th>推移</th></tr></thead>
+          <tbody>
+            <tr data-staff="担当 A"><td><button class="rowbtn" type="button">担当 A</button></td><td><span class="lv lv-2">高</span></td><td class="r">6</td><td><svg class="spark" data-v="1,2,2,3,2,4,5,6" data-c="#d6293e" width="96" height="26" aria-hidden="true"></svg></td></tr>
+            <tr data-staff="担当 B"><td><button class="rowbtn" type="button">担当 B</button></td><td><span class="lv lv-3">中</span></td><td class="r">3</td><td><svg class="spark" data-v="4,3,3,2,3,3,2,3" data-c="#b86e00" width="96" height="26" aria-hidden="true"></svg></td></tr>
+            <tr data-staff="担当 C"><td><button class="rowbtn" type="button">担当 C</button></td><td><span class="lv lv-4">確認</span></td><td class="r">1</td><td><svg class="spark" data-v="3,2,2,1,1,2,1,1" data-c="#2f6fdb" width="96" height="26" aria-hidden="true"></svg></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <footer>データ源: メール（10/8 08:00 取得）・チャット（10/8 09:30 取得）・ポータル（10/8 09:45 取得）。見本データのため実在の会社・担当者とは関係ありません。</footer>
+</div>
+
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title">
+  <div class="scrim" data-close></div>
+  <aside>
+    <button class="close" type="button" aria-label="閉じる" data-close>×</button>
+    <h2 id="dr-title" style="font-size:22px;font-weight:900">担当</h2>
+    <p style="font-size:12px;color:var(--ink-2);margin-top:4px">直近 4 週の集計（見本）</p>
+    <div class="facts"><strong style="font-size:13px">所見（自動・事実のみ）</strong><ul><li>48 時間以上の未返信が 2 件</li><li>先週より受付が 4 件増加</li></ul></div>
+  </aside>
+</div>
+
+<script>
+(function () {
+  // 最終更新は「最も古いデータ源」の時刻を出す。24時間を超えたら赤
+  var sources = ['2026-10-08T08:00:00+09:00', '2026-10-08T09:30:00+09:00', '2026-10-08T09:45:00+09:00'];
+  var oldest = Math.min.apply(null, sources.map(Date.parse));
+  var h = (Date.now() - oldest) / 36e5;
+  document.getElementById('fresh-t').textContent = h < 1 ? Math.max(1, Math.round(h * 60)) + '分前' : h < 48 ? Math.round(h) + '時間前' : Math.round(h / 24) + '日前';
+  if (h > 24) document.getElementById('fresh').classList.add('stale');
+
+  // スパークライン（線＋薄い面＋末尾の点）
+  document.querySelectorAll('svg.spark').forEach(function (s) {
+    var v = s.dataset.v.split(',').map(Number), c = s.dataset.c, w = 96, hh = 26, mx = Math.max.apply(null, v.concat(1));
+    var pts = v.map(function (n, i) { return [(i / (v.length - 1)) * (w - 4) + 2, hh - 3 - (n / mx) * (hh - 6)]; });
+    var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+    var last = pts[pts.length - 1];
+    s.setAttribute('viewBox', '0 0 ' + w + ' ' + hh);
+    s.innerHTML = '<path d="' + d + ' L' + last[0] + ',' + hh + ' L2,' + hh + ' Z" fill="' + c + '" opacity=".12"/>' +
+      '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="1.6" stroke-linejoin="round"/>' +
+      '<circle cx="' + last[0] + '" cy="' + last[1] + '" r="2.4" fill="' + c + '"/>';
+  });
+
+  document.querySelectorAll('[data-jump]').forEach(function (b) {
+    b.addEventListener('click', function () { document.getElementById(b.dataset.jump).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); });
+  });
+  var drawer = document.getElementById('drawer');
+  document.querySelectorAll('tr[data-staff]').forEach(function (tr) {
+    tr.addEventListener('click', function () { document.getElementById('dr-title').textContent = tr.dataset.staff; drawer.classList.add('on'); drawer.querySelector('.close').focus(); });
+  });
+  drawer.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) drawer.classList.remove('on'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') drawer.classList.remove('on'); });
+  document.getElementById('reload').addEventListener('click', function () { location.reload(); });
+})();
+</script>
+</body>
+</html>

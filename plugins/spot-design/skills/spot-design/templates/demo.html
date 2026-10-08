@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>設定チェック デモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* デモ型: 上=DEMO帯と進行ステップ、左=実際の画面、右=解説の吹き出し。900px 未満では吹き出しを画面の下に積む */
+:root{
+  --bg:#F3F6F7; --surface:#FFFFFF; --ink:#101820; --muted:#5B6773; --line:#D6DDE1;
+  --cyan:#00C8E4; --cyan-ink:#007A8F; --cyan-tint:#E5F9FC;
+  --magenta:#E5006E; --magenta-ink:#C7005F; --yellow:#FFD400;
+  --danger:#C62828; --danger-tint:#FDECEC; --warn:#9A5B00; --warn-tint:#FFF4DE; --ok:#1B7F3B; --ok-tint:#E8F5EC;
+  --font:"Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+  --r:4px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1317; --surface:#162027; --ink:#E7EDF1; --muted:#9AA8B3; --line:#2A3742;
+  --cyan-ink:#4FD8EC; --cyan-tint:#10313A; --magenta-ink:#FF5AA5;
+  --danger:#FF7B7B; --danger-tint:#3A1A1C; --warn:#F2B44C; --warn-tint:#3A2C12; --ok:#5CCB82; --ok-tint:#14301F;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1317; --surface:#162027; --ink:#E7EDF1; --muted:#9AA8B3; --line:#2A3742;
+  --cyan-ink:#4FD8EC; --cyan-tint:#10313A; --magenta-ink:#FF5AA5;
+  --danger:#FF7B7B; --danger-tint:#3A1A1C; --warn:#F2B44C; --warn-tint:#3A2C12; --ok:#5CCB82; --ok-tint:#14301F;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.75;margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:0 64px}
+h1,h2,h3{text-wrap:balance;line-height:1.4;margin:0}
+a{color:var(--cyan-ink)}
+button,input,select{font:inherit}
+:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+
+/* 上部: デモ表示と進行 */
+.demo-bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:#101820;color:#F3F6F7}
+.demo-bar .in{max-width:1240px;margin:0 auto;padding:8px 16px;display:flex;gap:8px 16px;align-items:center;flex-wrap:wrap;font-size:13px}
+.demo-tag{background:var(--yellow);color:#101820;font-weight:700;padding:0 8px;border-radius:var(--r);letter-spacing:.04em}
+.demo-bar .sp{flex:1}
+.tbtn{background:transparent;color:inherit;border:1px solid currentColor;border-radius:var(--r);padding:0 12px;min-height:44px;cursor:pointer;font-size:13px}
+.steps{display:flex;gap:4px;overflow-x:auto;padding-block:16px 8px;margin:0;list-style:none;padding-inline:0}
+.steps button{display:flex;gap:8px;align-items:center;white-space:nowrap;padding:0 12px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-size:13px;color:var(--muted);min-height:44px;cursor:pointer}
+.steps button .n{font-variant-numeric:tabular-nums;font-weight:700}
+.steps button[aria-current="step"]{border-color:var(--ink);color:var(--ink);font-weight:700;box-shadow:inset 0 -3px 0 var(--cyan)}
+
+/* 画面と吹き出しの2列 */
+.screen{display:none}
+.screen.on{display:block}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start;margin-top:16px}
+.row>.main{min-width:0}
+.bubble{position:relative;background:var(--yellow);color:#101820;border-radius:var(--r);padding:12px 16px;font-size:14px;line-height:1.7}
+.bubble::before{content:"";position:absolute;left:-10px;top:18px;border:10px solid transparent;border-left:0;border-right-color:var(--yellow)}
+.bubble b.k{display:inline-block;background:#101820;color:#FFD400;font-size:12px;letter-spacing:.08em;padding:0 8px;border-radius:2px;margin-right:8px}
+.bubble p{margin:0}.bubble p+p{margin-top:8px}
+.notes-hidden .bubble{display:none}
+.notes-hidden .row{grid-template-columns:minmax(0,1fr)}
+@media (max-width:900px){
+  .row{grid-template-columns:minmax(0,1fr);gap:12px}
+  .bubble::before{left:24px;top:-10px;border:10px solid transparent;border-top:0;border-bottom-color:var(--yellow)}
+}
+
+/* アプリ画面の部品 */
+.app{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.app-head{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:900;font-size:14px}
+.logo i{width:24px;height:24px;background:var(--cyan);border-radius:var(--r);display:inline-block;position:relative}
+.logo i::after{content:"";position:absolute;inset:6px 4px auto auto;width:6px;height:6px;background:var(--yellow);border-radius:50%}
+.app-body{padding:24px 20px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--cyan-ink)}
+.h1{font-size:26px;font-weight:900;margin-top:4px}
+.h2{font-size:19px;font-weight:700}
+.lead{color:var(--muted);margin:8px 0 0}
+.field{display:grid;gap:4px;margin-top:16px}
+.field label{font-weight:700;font-size:14px}
+.field label .req{color:var(--danger);margin-left:4px}
+.field input{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:var(--r);padding:8px 12px;min-height:48px;width:100%}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border-radius:var(--r);border:2px solid var(--ink);background:var(--ink);color:var(--surface);font-weight:700;cursor:pointer;text-decoration:none}
+.btn.sub{background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+
+/* 処理中 */
+.progress{height:8px;background:var(--line);border-radius:var(--r);overflow:hidden;margin-top:16px}
+.progress i{display:block;height:100%;width:0;background:var(--cyan);transition:width .25s linear}
+.clist{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:8px}
+.clist li{display:flex;gap:12px;align-items:center;font-size:14px;color:var(--muted)}
+.clist li .st{width:20px;text-align:center;font-weight:900}
+.clist li.done{color:var(--ink)}
+.clist li.done .st{color:var(--ok)}
+
+/* 結果 */
+.verdict{border:2px solid var(--danger);border-radius:var(--r);padding:12px 16px;display:flex;gap:12px;align-items:flex-start}
+.verdict b{color:var(--danger)}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.tile{border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;min-width:0}
+.tile .lb{font-size:13px;font-weight:700}
+.tile .v{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.2}
+.tile .v small{font-size:14px;font-weight:700;margin-left:2px}
+.tile.d{border-top:4px solid var(--danger)}.tile.d .v{color:var(--danger)}
+.tile.w{border-top:4px solid var(--warn)}.tile.w .v{color:var(--warn)}
+.tile.o{border-top:4px solid var(--ok)}.tile.o .v{color:var(--ok)}
+.issues{display:grid;gap:12px;margin-top:16px}
+.issue{border:1px solid var(--line);border-left:4px solid var(--danger);border-radius:var(--r);padding:12px 16px;display:grid;gap:8px}
+.issue.w{border-left-color:var(--warn)}
+.issue .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sev{font-size:12px;font-weight:700;padding:0 8px;border-radius:2px;background:var(--danger);color:var(--surface)}
+.issue.w .sev{background:var(--warn)}
+.issue .tt{font-weight:700;font-size:16px}
+.issue .why{font-size:14px;margin:0;color:var(--muted)}
+
+/* 申込 */
+.cta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.cta{border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.cta.main{border:2px solid var(--ink)}
+.cta .kind{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--cyan-ink)}
+.cta .nm{font-weight:900;font-size:17px}
+.cta .pr{font-weight:900;color:var(--magenta-ink);font-variant-numeric:tabular-nums;font-size:20px}
+.cta .pr small{font-size:12px;color:var(--muted);font-weight:500;margin-left:4px}
+.cta .ds{font-size:13px;color:var(--muted);flex:1;margin:0}
+.cta .btn{align-self:flex-start}
+@media (max-width:640px){.cta-grid,.tiles{grid-template-columns:minmax(0,1fr)}}
+.foot-nav{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px}
+@media (prefers-reduced-motion:reduce){.progress i{transition:none}}
+</style>
+</head>
+<body>
+<div class="demo-bar"><div class="in">
+  <span class="demo-tag">DEMO</span>
+  <span>表示している会社・社員・不備はすべて架空です。送信も外部連携も行いません。</span>
+  <span class="sp"></span>
+  <button class="tbtn" type="button" id="toggle-notes" aria-pressed="false">吹き出しを隠す</button>
+  <button class="tbtn" type="button" data-go="0">最初から</button>
+</div></div>
+
+<div class="wrap">
+  <ol class="steps" aria-label="デモの進行">
+    <li><button type="button" data-go="0" aria-current="step"><span class="n">1</span>入口</button></li>
+    <li><button type="button" data-go="1"><span class="n">2</span>点検中</button></li>
+    <li><button type="button" data-go="2"><span class="n">3</span>結果</button></li>
+    <li><button type="button" data-go="3"><span class="n">4</span>申込</button></li>
+  </ol>
+
+  <!-- 1. 入口 -->
+  <div class="screen on"><div class="row">
+    <div class="main app">
+      <div class="app-head"><span class="logo"><i aria-hidden="true"></i>サンプルサービス</span></div>
+      <div class="app-body">
+        <span class="eyebrow">設定チェック 2026</span>
+        <h1 class="h1">社員に依頼する前に、設定の抜けを確かめましょう</h1>
+        <p class="lead">会社の設定を読み取り、よくある抜けを 3 分で点検します。</p>
+        <div class="field"><label for="co">会社名<span class="req">*</span></label><input id="co" value="【デモ】サンプル商事株式会社"></div>
+        <div class="field"><label for="nm">ご担当者名<span class="req">*</span></label><input id="nm" value="見本 花子"></div>
+        <div class="actions"><button class="btn" type="button" data-go="1">はじめる</button></div>
+      </div>
+    </div>
+    <aside class="bubble"><p><b class="k">解説</b><strong>去年は、ここで入力された内容がどこにも保存されていませんでした。</strong></p><p>今年は「はじめる」を押した時点で記録し、保存に失敗したら画面に出して担当者へメールで知らせます。</p></aside>
+  </div></div>
+
+  <!-- 2. 点検中 -->
+  <div class="screen"><div class="row">
+    <div class="main app">
+      <div class="app-head"><span class="logo"><i aria-hidden="true"></i>サンプルサービス</span></div>
+      <div class="app-body">
+        <h2 class="h2">点検しています</h2>
+        <div class="progress" role="progressbar" aria-label="点検の進み具合" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="bar"></i></div>
+        <ul class="clist" id="clist">
+          <li><span class="st">・</span>社員の住所・扶養の登録</li>
+          <li><span class="st">・</span>前職の源泉徴収票の有無</li>
+          <li><span class="st">・</span>保険料控除の入力欄の設定</li>
+          <li><span class="st">・</span>提出期限の設定</li>
+        </ul>
+        <div class="actions"><button class="btn" type="button" data-go="2">結果を見る</button></div>
+      </div>
+    </div>
+    <aside class="bubble"><p><b class="k">解説</b>読み取りだけで、会社の設定は書き換えません。</p><p>4 項目を順に点検し、終わったものから緑のチェックが付きます。</p></aside>
+  </div></div>
+
+  <!-- 3. 結果 -->
+  <div class="screen"><div class="row">
+    <div class="main app">
+      <div class="app-head"><span class="logo"><i aria-hidden="true"></i>サンプルサービス</span></div>
+      <div class="app-body">
+        <h1 class="h1">【デモ】サンプル商事株式会社</h1>
+        <div class="verdict" style="margin-top:16px"><div><b>2 件の抜け</b>が見つかりました。社員に依頼する前に直すことをおすすめします。</div></div>
+        <div class="tiles">
+          <div class="tile d"><span class="lb">直すべき</span><div class="v">2<small>件</small></div></div>
+          <div class="tile w"><span class="lb">確認したい</span><div class="v">1<small>件</small></div></div>
+          <div class="tile o"><span class="lb">問題なし</span><div class="v">12<small>件</small></div></div>
+        </div>
+        <div class="issues">
+          <div class="issue"><div class="top"><span class="sev">直すべき</span><span class="tt">扶養の登録が去年のまま</span></div><p class="why">見本 一郎さん（社員番号 0012）の配偶者が、今年の収入では扶養から外れる可能性があります。</p></div>
+          <div class="issue"><div class="top"><span class="sev">直すべき</span><span class="tt">提出期限が未設定</span></div><p class="why">期限が無いと、社員に催促のお知らせが届きません。</p></div>
+          <div class="issue w"><div class="top"><span class="sev">確認したい</span><span class="tt">前職の源泉徴収票が未回収</span></div><p class="why">今年入社の 1 名分。前職がある場合は回収が必要です。</p></div>
+        </div>
+        <div class="actions"><button class="btn" type="button" data-go="3">直し方を相談する</button><button class="btn sub" type="button" data-go="0">最初に戻る</button></div>
+      </div>
+    </div>
+    <aside class="bubble"><p><b class="k">ここが新しい</b>結果は「直すべき / 確認したい / 問題なし」の3段で、色と文字の両方で示します。</p><p>問題なしの 12 件は数だけ出し、一覧は畳んでおきます。</p></aside>
+  </div></div>
+
+  <!-- 4. 申込 -->
+  <div class="screen"><div class="row">
+    <div class="main app">
+      <div class="app-head"><span class="logo"><i aria-hidden="true"></i>サンプルサービス</span></div>
+      <div class="app-body">
+        <h2 class="h2">ここから先は、おまかせいただけます</h2>
+        <div class="cta-grid">
+          <div class="cta main"><span class="kind">設定代行</span><span class="nm">抜けを直して、依頼の準備まで</span><span class="pr">33,000円<small>税込・1回</small></span><p class="ds">点検で見つかった項目を当社が修正し、社員への依頼文も用意します。</p><button class="btn" type="button" onclick="alert('デモのため申込は送信されません')">申し込む</button></div>
+          <div class="cta"><span class="kind">相談</span><span class="nm">まずは話を聞きたい</span><span class="pr">0円<small>30分</small></span><p class="ds">結果を見ながら、直し方をオンラインでご説明します。</p><button class="btn sub" type="button" onclick="alert('デモのため予約は送信されません')">相談を予約する</button></div>
+        </div>
+      </div>
+    </div>
+    <aside class="bubble"><p><b class="k">解説</b>主ボタンは1つだけ。もう一方は枠線のボタンにして、どちらを押してほしいかを明確にしています。</p></aside>
+  </div></div>
+
+  <div class="foot-nav"><button class="btn sub" type="button" id="prev">前へ</button><button class="btn" type="button" id="next">次へ</button></div>
+</div>
+<script>
+(function () {
+  var screens = document.querySelectorAll('.screen');
+  var stepBtns = document.querySelectorAll('.steps button');
+  var cur = 0, timer = null;
+  function runCheck() {
+    var bar = document.getElementById('bar'), items = document.querySelectorAll('#clist li'), i = 0;
+    bar.style.width = '0'; items.forEach(function (li) { li.classList.remove('done'); li.querySelector('.st').textContent = '・'; });
+    clearInterval(timer);
+    timer = setInterval(function () {
+      if (i >= items.length) { clearInterval(timer); return; }
+      items[i].classList.add('done'); items[i].querySelector('.st').textContent = '✓';
+      i++; var pct = Math.round(i / items.length * 100);
+      bar.style.width = pct + '%'; bar.parentNode.setAttribute('aria-valuenow', pct);
+    }, 500);
+  }
+  function go(n) {
+    cur = Math.max(0, Math.min(screens.length - 1, n));
+    screens.forEach(function (s, i) { s.classList.toggle('on', i === cur); });
+    stepBtns.forEach(function (b, i) { if (i === cur) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
+    document.getElementById('prev').disabled = cur === 0;
+    document.getElementById('next').disabled = cur === screens.length - 1;
+    if (cur === 1) runCheck();
+    window.scrollTo({ top: 0 });
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-go]'); if (t) go(Number(t.dataset.go));
+  });
+  document.getElementById('prev').addEventListener('click', function () { go(cur - 1); });
+  document.getElementById('next').addEventListener('click', function () { go(cur + 1); });
+  document.getElementById('toggle-notes').addEventListener('click', function () {
+    var hidden = document.body.classList.toggle('notes-hidden');
+    this.setAttribute('aria-pressed', String(hidden));
+    this.textContent = hidden ? '吹き出しを表示' : '吹き出しを隠す';
+  });
+  go(0);
+})();
+</script>
+</body>
+</html>

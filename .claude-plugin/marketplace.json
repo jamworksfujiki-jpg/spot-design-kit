@@ -1,0 +1,17 @@
+{
+  "name": "spot-design-kit",
+  "owner": {
+    "name": "Jamworks"
+  },
+  "metadata": {
+    "description": "スポット社労士くん系の画面・LP・レポート・デモ・ダッシュボードを同じ品質で作るためのデザインスキル"
+  },
+  "plugins": [
+    {
+      "name": "spot-design",
+      "source": "./plugins/spot-design",
+      "description": "画面・LP・レポート・デモ・ダッシュボードを作るときに自動で読まれるデザインスキル（作法・テンプレ4種・機械検査つき）",
+      "version": "1.0.0"
+    }
+  ]
+}

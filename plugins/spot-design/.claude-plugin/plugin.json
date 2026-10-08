@@ -1,0 +1,9 @@
+{
+  "name": "spot-design",
+  "version": "1.0.0",
+  "description": "画面・LP・レポート・デモ・ダッシュボードを作るときに自動で読まれるデザインスキル（作法・テンプレ4種・機械検査つき）",
+  "author": {
+    "name": "Jamworks"
+  },
+  "keywords": ["design", "ui", "lp", "report", "dashboard", "japanese"]
+}
