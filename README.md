@@ -21,13 +21,13 @@ Claude Code に入れると、**画面・LP・レポート・デモ・ダッシ�
 Claude Code を開いて、次の2行をそのまま入力します。
 
 ```
-/plugin marketplace add <GitHubのowner>/spot-design-kit
+/plugin marketplace add jamworksfujiki-jpg/spot-design-kit
 /plugin install spot-design@spot-design-kit
 ```
 
 入れたら Claude Code を一度終了して開き直します。更新が出たときは `/plugin marketplace update spot-design-kit`。
 
-> リポジトリが private の場合は、その GitHub リポジトリに招待されている必要があります（`gh auth login` 済みであること）。
+> 公開リポジトリ: https://github.com/jamworksfujiki-jpg/spot-design-kit （GitHub アカウントが無くても入れられます）
 
 ### B. ZIP やフォルダでもらった場合
 
