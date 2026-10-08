@@ -109,6 +109,8 @@ h3{font-size:17px;font-weight:700;margin-top:8px}
 /* 表 */
 .tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--bg)}
 table{border-collapse:collapse;width:100%;font-size:14px}
+/* 列が多い表はスマホで1文字ずつ折り返して潰れるので、箱の中だけ横スクロールさせる */
+.tbl table{min-width:560px}
 th,td{padding:12px 16px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 thead th{background:var(--surface);font-size:12px;color:var(--ink-2);font-weight:700;white-space:nowrap}
 td.r,th.r{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
